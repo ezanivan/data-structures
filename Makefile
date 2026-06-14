@@ -46,15 +46,9 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
 
-example: $(LIBRARY)
-	$(CC) $(CFLAGS) $(EXAMPLE) -I$(INCLUDE_DIR) $(LIBRARY) -o $(BUILD_DIR)/example
-
-run-example: example
-	$(BUILD_DIR)/example
-
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: all install uninstall clean example run-example
+.PHONY: all install uninstall clean
 
 -include $(DEPS)

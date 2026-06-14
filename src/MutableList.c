@@ -7,9 +7,11 @@ typedef struct MutableList {
     size_t count;
     size_t typeSize;
     char* items;
+    void (*deconstructor)(void*);
 } MutableList;
 
-MutableList* lcreate(const size_t typeSize){
+MutableList* lcreate(const size_t typeSize, void (*elementDeconstructor)(void*)){
+    if (typeSize > SIZE_MAX) return NULL;
     if (typeSize == 0) return NULL;
     MutableList* ml = malloc(sizeof(MutableList));
     if (ml == NULL) return NULL;
@@ -17,6 +19,7 @@ MutableList* lcreate(const size_t typeSize){
     ml->count = 0;
     ml->typeSize = typeSize;
     ml->items = malloc(typeSize * ml->capacity);
+    ml->deconstructor = elementDeconstructor;
     if (ml->items == NULL){
         free(ml);
         return NULL;
@@ -26,9 +29,24 @@ MutableList* lcreate(const size_t typeSize){
 
 void ldestroy(MutableList* ml){
     if (ml == NULL) return;
+    if (ml->deconstructor != NULL){
+        for(size_t i = 0; i < ml->count; i++){
+            ml->deconstructor(ml->items + ml->typeSize * i);
+        }
+    }
     free(ml->items);
     free(ml);
 }
+
+void ldestructor(void* element){
+    if (element == NULL) return;
+
+    MutableList* ml;
+
+    memcpy(&ml, element, sizeof(ml));
+
+    ldestroy(ml);
+};
 
 bool extend(MutableList* ml){
     if (ml == NULL) return false;
@@ -55,6 +73,7 @@ bool extendToSize(MutableList* ml, const size_t size){
 
 bool lappend(MutableList* ml, const void* value){
     if (ml == NULL) return false;
+    if (value == NULL) return false;
     if (ml->capacity == ml->count){
         if (!extend(ml)) return false;
     }
@@ -65,6 +84,7 @@ bool lappend(MutableList* ml, const void* value){
 
 bool linsert(MutableList* ml, const size_t index, const void* value){
     if (ml == NULL) return false;
+    if (value == NULL) return false; 
     if (index > ml->count) return false;
 
     if (ml->capacity == ml->count){
@@ -94,6 +114,9 @@ bool ljoin(MutableList* output, const MutableList* source){
 bool lremove(MutableList* ml, const size_t index){
     if (ml == NULL) return false;
     if (index >= ml->count) return false;
+    if (ml->deconstructor != NULL){
+        ml->deconstructor(ml->items + ml->typeSize * index);
+    }
     memmove(ml->items + index * ml->typeSize,ml->items + (index+1) * ml->typeSize, (ml->count - index - 1) * ml->typeSize);
     ml->count--;
     return true;
@@ -101,6 +124,7 @@ bool lremove(MutableList* ml, const size_t index){
 
 bool lget(const MutableList* ml, const size_t index, void* out){
     if (ml == NULL) return false;
+    if (out == NULL) return false;
     if (index >= ml->count) return false;
     memcpy(out,ml->items + index * ml->typeSize, ml->typeSize);
     return true;
@@ -141,6 +165,11 @@ bool ltrimToSize(MutableList* ml,const size_t size){
 
 bool lclear(MutableList* ml){
     if (ml == NULL) return false;
+    if (ml->deconstructor != NULL){
+        for(size_t i = 0; i < ml->count; i++){
+            ml->deconstructor(ml->items + ml->typeSize * i);
+        }
+    }
     ml->count = 0;
     return ltrimToSize(ml,10);
 }

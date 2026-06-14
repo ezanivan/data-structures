@@ -13,17 +13,22 @@
 - Install/uninstall targets
 ---
 ### Build 
-Build the static library:  
+Build the static library:
+    
     make   
 
 ### Output:
     build/libds.a
 
+### How to compile:
+    gcc yourFile.c data-structures/build/libds.a
+or     
+
+    gcc yourFile.c path/to/libds.a
+
+
 ### Debug:  
     make DEBUG=1
-
-### Run example:
-    make-run-example
 
 ### Instalation:
 install the library and headers system-wide:
@@ -49,14 +54,10 @@ install the library and headers system-wide:
 - building reusable C components
 
 ### Future Plans
-- Stack
-- Queue
-- Linked list
 - Hash map
 - Binary trees
 - B-trees
 - Graphs
-- Unit tests
 - Shared library support
 
 ---
